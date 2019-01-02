@@ -1,4 +1,4 @@
-package com.viscu.rpc;
+package com.viscu.rpc.registry;
 
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public class RpcServiceDiscovery {
 
-    private final Logger logger = LoggerFactory.getLogger(RpcServiceDiscovery.class);
+    private final Logger logger = LoggerFactory.getLogger( RpcServiceDiscovery.class);
 
     private String zkServerPath;
 
@@ -59,12 +59,12 @@ public class RpcServiceDiscovery {
             //实例化客户端
             client = CuratorFrameworkFactory.builder()
                     .connectString(zkServerPath)
-                    .sessionTimeoutMs(Constant.ZK_SESSION_TIMEOUT)
+                    .sessionTimeoutMs( Constant.ZK_SESSION_TIMEOUT)
                     .retryPolicy(retryPolicy)
                     .namespace("rpc_workspace")
                     .build();
             //对子节点进行监听
-            addWatcher(Constant.ZK_REGISTRY_PATH);
+            addWatcher( Constant.ZK_REGISTRY_PATH);
         }catch (Exception e){
             logger.error("客户端连接zk服务器发生异常, 请重试...");
         }
@@ -106,7 +106,7 @@ public class RpcServiceDiscovery {
         /*获取子节点的数据*/
         nodeList.forEach((node)->{
             try {
-                byte[] bytes = client.getData().forPath(Constant.ZK_REGISTRY_PATH + "/" + node);
+                byte[] bytes = client.getData().forPath( Constant.ZK_REGISTRY_PATH + "/" + node);
                 dataList.add(new String(bytes));
             } catch (Exception e) {
                 logger.error("获取数据失败");
