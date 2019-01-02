@@ -1,0 +1,5 @@
+# Created by .ignore support plugin (hsz.mobi)
+
+.idea
+netty_rpc.iml
+src/test
