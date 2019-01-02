@@ -1,11 +1,9 @@
-package com.viscu.rpc;
+package com.viscu.rpc.registry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
@@ -21,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 public class RpcServiceRegistry{
 
-    private final Logger logger = LoggerFactory.getLogger(RpcServiceRegistry.class);
+    private final Logger logger = LoggerFactory.getLogger( RpcServiceRegistry.class);
 
     private String zkServerPath;
 
@@ -63,7 +61,7 @@ public class RpcServiceRegistry{
             //实例化客户端
             client = CuratorFrameworkFactory.builder()
                     .connectString(zkServerPath)
-                    .sessionTimeoutMs(Constant.ZK_SESSION_TIMEOUT)
+                    .sessionTimeoutMs( Constant.ZK_SESSION_TIMEOUT)
                     .retryPolicy(retryPolicy)
                     .namespace("rpc_workspace")
                     .build();
@@ -74,12 +72,12 @@ public class RpcServiceRegistry{
 
     public void init(){
         try{
-            if(client.checkExists().forPath(Constant.ZK_REGISTRY_PATH) == null){
+            if(client.checkExists().forPath( Constant.ZK_REGISTRY_PATH) == null){
                 client.create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
                         .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
-                        .forPath(Constant.ZK_REGISTRY_PATH);
+                        .forPath( Constant.ZK_REGISTRY_PATH);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -114,15 +112,15 @@ public class RpcServiceRegistry{
 
     private void createNode(String data) {
         try {
-            if(client.checkExists().forPath(Constant.ZK_DATA_PATH) == null){
+            if(client.checkExists().forPath( Constant.ZK_DATA_PATH) == null){
                 client.create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.EPHEMERAL)
                         .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
-                        .forPath(Constant.ZK_DATA_PATH, data.getBytes());
+                        .forPath( Constant.ZK_DATA_PATH, data.getBytes());
             }else {
                 client.setData()
-                        .forPath(Constant.ZK_DATA_PATH, data.getBytes());
+                        .forPath( Constant.ZK_DATA_PATH, data.getBytes());
             }
         }catch (Exception e){
             logger.error("创建节点失败");
