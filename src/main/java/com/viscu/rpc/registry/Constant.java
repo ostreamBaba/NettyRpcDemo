@@ -1,4 +1,4 @@
-package com.viscu.rpc;
+package com.viscu.rpc.registry;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
