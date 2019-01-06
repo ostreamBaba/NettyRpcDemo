@@ -17,22 +17,19 @@ import org.slf4j.LoggerFactory;
  * @ 注册中心zookeeper
  */
 
+/*使用zookeeper可以轻松实现服务注册功能*/
 public class RpcServiceRegistry{
 
-    private final Logger logger = LoggerFactory.getLogger( RpcServiceRegistry.class);
+    private final Logger logger = LoggerFactory.getLogger(RpcServiceRegistry.class);
 
     private String zkServerPath;
 
     private CuratorFramework client = null;
 
-    /**
-     * 客户端连接重试的次数 默认3次
-     */
+    /*客户端连接重试的次数 默认3次*/
     private int retryTimes = 3;
 
-    /**
-     * 每次重试的间隔时间 默认5000ms
-     */
+    /*每次重试的间隔时间 默认5000ms*/
     private int sleepMsBetweenRetries = 5000;
 
     public RpcServiceRegistry(String... zkServerPath) {
@@ -61,23 +58,27 @@ public class RpcServiceRegistry{
             //实例化客户端
             client = CuratorFrameworkFactory.builder()
                     .connectString(zkServerPath)
-                    .sessionTimeoutMs( Constant.ZK_SESSION_TIMEOUT)
+                    .sessionTimeoutMs(Constant.ZK_SESSION_TIMEOUT)
                     .retryPolicy(retryPolicy)
                     .namespace("rpc_workspace")
                     .build();
+            /*启动*/
+            client.start();
         }catch (Exception e){
             logger.error("客户端连接zk服务器发生异常, 请重试...");
         }
     }
 
-    public void init(){
+    private void init(){
         try{
-            if(client.checkExists().forPath( Constant.ZK_REGISTRY_PATH) == null){
+            /*判断zk的父亲节点是否被创建*/
+            /*设置为持久化节点 权限为任何人都可以访问*/
+            if(client.checkExists().forPath(Constant.ZK_REGISTRY_PATH) == null){
                 client.create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
                         .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
-                        .forPath( Constant.ZK_REGISTRY_PATH);
+                        .forPath(Constant.ZK_REGISTRY_PATH);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -90,18 +91,27 @@ public class RpcServiceRegistry{
      * @return void
      * @create by ostreamBaba on 下午5:11 19-1-2
      */
+
     public void register(String data){
         if(StringUtils.isBlank(data)){
             return;
         }
+        /*客户端还没有实例化*/
         if(client == null){
             create();
-        }else {
-            //查看是否父亲节点已经建立
-            init();
-            createNode(data);
         }
+        /*查看是否父亲节点已经建立*/
+        init();
+        /*创建子节点*/
+        /*
+            zk工作目录为
+            |—— /rpc_workspace
+                    |—— /registry(持久节点)
+                             |—— /data(临时节点 存放数据为rpc服务地址(host:ip))
+         */
+        createNode(data);
     }
+
 
     /**
      * @描述 创建子节点
@@ -112,15 +122,17 @@ public class RpcServiceRegistry{
 
     private void createNode(String data) {
         try {
-            if(client.checkExists().forPath( Constant.ZK_DATA_PATH) == null){
+            /*若没有创建 则创建子节点并设置子节点的数据*/
+            if(client.checkExists().forPath(Constant.ZK_DATA_PATH) == null){
                 client.create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.EPHEMERAL)
                         .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
-                        .forPath( Constant.ZK_DATA_PATH, data.getBytes());
+                        .forPath(Constant.ZK_DATA_PATH, data.getBytes());
             }else {
+                /*创建了的话 直接设置数据(不采用乐观锁)*/
                 client.setData()
-                        .forPath( Constant.ZK_DATA_PATH, data.getBytes());
+                        .forPath(Constant.ZK_DATA_PATH, data.getBytes());
             }
         }catch (Exception e){
             logger.error("创建节点失败");
