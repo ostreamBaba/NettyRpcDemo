@@ -47,7 +47,7 @@ public class RpcServiceRegistry{
     }
 
     /**
-     * @描述 对zk进行初始化配置 同步创建zk 如果使用远程api的话是异步创建 这里需要区分一下
+     * @描述 对zk进行初始化配置 同步创建zk 如果使用原生api的话是异步创建 这里需要区分一下
      * @return void
      * @create by ostreamBaba on 下午4:48 19-1-2
      */
@@ -106,8 +106,8 @@ public class RpcServiceRegistry{
         /*
             zk工作目录为
             |—— /rpc_workspace
-                    |—— /registry(持久节点)
-                             |—— /data(临时节点 存放数据为rpc服务地址(host:ip))
+                    |—— /registry(持久节点 用于存放所有服务器临时节点)
+                             |—— /data(临时节点 存放数据为rpc服务地址(host:port))
          */
         createNode(data);
     }
