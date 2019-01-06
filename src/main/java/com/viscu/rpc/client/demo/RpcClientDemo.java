@@ -12,6 +12,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
+
 /**
  * @ Create by ostreamBaba on 19-1-6
  * @ rpc客户端
@@ -27,8 +30,7 @@ public class RpcClientDemo extends SimpleChannelInboundHandler<RpcResponse> {
 
     private RpcResponse response;
 
-    /*锁作用*/
-    private final Object obj = new Object();
+    private CountDownLatch latch;
 
     public RpcClientDemo(String host, int port) {
         this.host = host;
@@ -40,10 +42,7 @@ public class RpcClientDemo extends SimpleChannelInboundHandler<RpcResponse> {
     protected void channelRead0(ChannelHandlerContext ctx, RpcResponse response) throws Exception {
         this.response = response;
         LOGGER.info("接受到消息: {}", response);
-        synchronized (obj){
-            /*收到响应 唤醒线程*/
-            obj.notifyAll();
-        }
+        latch.countDown();
     }
 
     @Override
@@ -54,7 +53,8 @@ public class RpcClientDemo extends SimpleChannelInboundHandler<RpcResponse> {
 
 
     /*通过netty客户端来发送消息*/
-    public RpcResponse send(RpcRequest request) throws InterruptedException {
+    public RpcResponse send(RpcRequest request) throws InterruptedException, BrokenBarrierException {
+        latch = new CountDownLatch(1);
         EventLoopGroup group = new NioEventLoopGroup();
         try{
             Bootstrap bootstrap = new Bootstrap();
@@ -71,10 +71,8 @@ public class RpcClientDemo extends SimpleChannelInboundHandler<RpcResponse> {
                     } ).option(ChannelOption.SO_KEEPALIVE, true);
             ChannelFuture future = bootstrap.connect(host, port).sync();
             future.channel().writeAndFlush(request).sync();
-            synchronized (obj){
-                /*等接受到服务端的回复消息才唤醒当前线程*/
-                obj.wait();
-            }
+            /*等待接收到服务端的消息才进行下一步*/
+            latch.await();
             if(response != null){
                 /*关闭当前客户端*/
                 future.channel().closeFuture().sync();
